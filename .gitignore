@@ -1,0 +1,4 @@
+.*.swp
+*.old
+build/
+timesfour.cpp
