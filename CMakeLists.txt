@@ -25,19 +25,28 @@ if ( CGAL_FOUND )
 	set(WRAP "mex_wrap")
 	set(WRAP_FILE "${WRAP}.cpp")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
+	set(CGAL_LINK_FLAGS "-lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core")
 
 	#include mex.h dir
 	include_directories("${MATLAB_ROOT}/extern/include")
+	link_directories("/usr/lib/x86_64-linux-gnu")
 	# add_library(${PROJECT_NAME} ${MAIN_FILE})
 	add_library(${WRAP} OBJECT ${WRAP_FILE})
 	ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME}
 	    POST_BUILD
-	    COMMAND mex  -L./  -l${PROJECT_NAME}  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o
+	    COMMAND mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core
 )
 
+	    # COMMAND mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} ${CGAL_LINK_FLAGS}
 
 else()
 	message(STATUS "This program requires the CGAL library, and will not be compiled.")
-  
+  # -lCGAL_Core
 endif()
 
+# message("CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS: ${CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS}") 
+# message("CMAKE_SHARED_LIBRARY_RUNTIME_CXX_FLAG: ${CMAKE_SHARED_LIBRARY_RUNTIME_CXX_FLAG}") 
+# message("CGAL_LIBRARIES: ${CGAL_LIBRARIES}") 
+# message("CGAL_3RD_PARTY_LIBRARIES: ${CGAL_3RD_PARTY_LIBRARIES}") 
+# message("CGAL_EXECUTABLE_TARGETS: ${CGAL_EXECUTABLE_TARGETS}") 
+# message("CGAL_LIBRARY_TARGETS: ${CGAL_LIBRARY_TARGETS}") 
