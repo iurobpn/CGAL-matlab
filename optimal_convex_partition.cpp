@@ -30,9 +30,9 @@ typedef CGAL::Creator_uniform_2<int, Point_2>               Creator;
 typedef CGAL::Random_points_in_square_2<Point_2, Creator>   Point_generator;
 
 void print_polygon(const Polygon_2& p);
-Polygon_list optimal_convex_partition_2(size_t N, double *x);
+Polygon_list optimal_convex_partition_2(const size_t &M, double *x);
 
-void make_polygon(Polygon_2 &polygon, double *x, int N);
+Polygon_2 make_polygon(double *x,const int &M);
 
 void __mexFunction__( int nlhs, mxArray *plhs[],
                   int nrhs, const mxArray *prhs[] )
@@ -52,35 +52,37 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 	/* The input must be a noncomplex 3x2 double matrix.*/
 	mrows = mxGetM(prhs[0]);
 	ncols = mxGetN(prhs[0]);
-	if( !mxIsDouble(prhs[0]) || mxIsComplex(prhs[0]) ||
-			!(mrows>2 && ncols==2) ) {
+	mexPrintf("rows:%d, cols:%d\n",mrows,ncols);
+	if( !mxIsDouble(prhs[0]) || mxIsComplex(prhs[0]) || !(mrows>2 && ncols==2) ) {
 		mexErrMsgIdAndTxt( "MATLAB:optimal_convex_partition_2:inputNotBigEnough",
 				    "Input must be at least 3x2 double matrix.");
 	}
 
 
-	/* Assign pointers to each input and output. */
+	// Assign pointers to each input and output.
 	x = mxGetPr(prhs[0]);
-	size_t N = mxGetN(prhs[0]);
 
 	/* Call the timesfour subroutine. */
-	Polygon_list pl = optimal_convex_partition_2(N,x);
+	Polygon_list pl = optimal_convex_partition_2(mrows,x);
 	// mxArray *mxCreateCellArray(mwSize ndim, const mwSize *dims);
 	/* Create matrix for the return argument. */
-	mwSize npoly[2] = {(int)pl.size(),2};
-	
-	plhs[0] = mxCreateCellArray(2, npoly);
+	mwSize numpoly[1];
+	numpoly[0] = pl.size();
+	mexPrintf("numpoly: %d\n",numpoly[0]);
+
+	plhs[0] = mxCreateCellArray(1, numpoly);
 	y = mxGetPr(plhs[0]);
 
-
-	std::list<Polygon_2>::iterator it;
+	Polygon_list::iterator it;
 	int index = 0;
 	for(it = pl.begin(); it != pl.end(); it++) {
 		Polygon_2 p = *it;
 		/*  set the output pointer to the output matrix */
-		mxArray *c = mxCreateDoubleMatrix( p.size(), 2, mxREAL);
+		int n = p.size();
+		mexPrintf("polygon size: %d\n",n);
+		mxArray *c = mxCreateDoubleMatrix( n, 2, mxREAL);
 		double *cptr = mxGetPr(c);
-		
+
 		int i = 0;
 		for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
 			++vi) { 
@@ -93,14 +95,15 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 	}
 }
 
-Polygon_list optimal_convex_partition_2(size_t N, double *x)
+Polygon_list optimal_convex_partition_2(const size_t &rows, double *x)
 {
 	Polygon_2             polygon;
 	Polygon_list          partition_polys;
 	Traits                partition_traits;
 	Validity_traits       validity_traits;
 
-	make_polygon(polygon,x,N);
+	polygon = make_polygon(x,rows);
+	print_polygon(polygon);
 	CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
 				    polygon.vertices_end(),
 				    std::back_inserter(partition_polys),
@@ -120,10 +123,14 @@ Polygon_list optimal_convex_partition_2(size_t N, double *x)
 	return partition_polys;
 }
 
-void make_polygon(Polygon_2 &polygon, double *x, int N)
+Polygon_2 make_polygon(double *x, const int &M)
 {
-	for(int i=0; i<N; i++)
-		polygon.push_back(Point_2(x[i*N],x[i*N+1]));
+	Polygon_2 polygon;
+
+	for(int i=0; i<M; i++)
+		polygon.push_back(Point_2(x[i],x[i+M]));
+
+	return polygon;
 }
 
 
@@ -133,7 +140,7 @@ void print_polygon(const Polygon_2& p)
 	std::cout << "P: ";
 	for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
 			++vi) { 
-		std::cout << "(" << vi->x() << "," << vi->y() << ") ";
+		mexPrintf("(%f,%f)\n", vi->x(), vi->y());
 	}
 	std::cout << "\n";
 }

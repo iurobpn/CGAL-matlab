@@ -1,4 +1,4 @@
 .*.swp
 *.old
 build/
-timesfour.cpp
+*.mexa64
