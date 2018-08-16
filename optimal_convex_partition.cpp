@@ -52,7 +52,7 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 	/* The input must be a noncomplex 3x2 double matrix.*/
 	mrows = mxGetM(prhs[0]);
 	ncols = mxGetN(prhs[0]);
-	mexPrintf("rows:%d, cols:%d\n",mrows,ncols);
+	// mexPrintf("rows:%d, cols:%d\n",mrows,ncols);
 	if( !mxIsDouble(prhs[0]) || mxIsComplex(prhs[0]) || !(mrows>2 && ncols==2) ) {
 		mexErrMsgIdAndTxt( "MATLAB:optimal_convex_partition_2:inputNotBigEnough",
 				    "Input must be at least 3x2 double matrix.");
@@ -68,7 +68,7 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 	/* Create matrix for the return argument. */
 	mwSize numpoly[1];
 	numpoly[0] = pl.size();
-	mexPrintf("numpoly: %d\n",numpoly[0]);
+	// mexPrintf("numpoly: %d\n",numpoly[0]);
 
 	plhs[0] = mxCreateCellArray(1, numpoly);
 	y = mxGetPr(plhs[0]);
@@ -79,7 +79,7 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 		Polygon_2 p = *it;
 		/*  set the output pointer to the output matrix */
 		int n = p.size();
-		mexPrintf("polygon size: %d\n",n);
+		// mexPrintf("polygon size: %d\n",n);
 		mxArray *c = mxCreateDoubleMatrix( n, 2, mxREAL);
 		double *cptr = mxGetPr(c);
 
@@ -87,12 +87,14 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 		for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
 			++vi) { 
 			cptr[i] = vi->x();
-			cptr[i+1] = vi->y();
-			i+=2;
+			cptr[i+n] = vi->y();
+			i++;
 		}
 		mxSetCell(plhs[0],index,c);
 		index++;
 	}
+	
+	return;
 }
 
 Polygon_list optimal_convex_partition_2(const size_t &rows, double *x)
@@ -103,7 +105,7 @@ Polygon_list optimal_convex_partition_2(const size_t &rows, double *x)
 	Validity_traits       validity_traits;
 
 	polygon = make_polygon(x,rows);
-	print_polygon(polygon);
+	// print_polygon(polygon);
 	CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
 				    polygon.vertices_end(),
 				    std::back_inserter(partition_polys),
@@ -115,11 +117,6 @@ Polygon_list optimal_convex_partition_2(const size_t &rows, double *x)
 			     validity_traits));
    	
 
-	// print_polygon(polygon);
-	// std::list<Polygon_2>::iterator it;
-	// for(it = partition_polys.begin(); it != partition_polys.end(); it++) {
-	// 	print_polygon(*it);
-	// }
 	return partition_polys;
 }
 
