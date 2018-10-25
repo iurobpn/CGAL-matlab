@@ -2,12 +2,12 @@
 # This is the CMake script for compiling a CGAL application.
 
 
-project( optimal_convex_partition )
+project( optimal_convex_partition_2 )
 
 cmake_minimum_required(VERSION 2.8.10)
 
 find_package(CGAL QUIET COMPONENTS Core )
-set(MAIN_FILE "optimal_convex_partition.cpp")
+set(MAIN_FILE "optimal_convex_partition_2.cpp")
 
 if ( CGAL_FOUND )
 # CGAL static library creation
@@ -17,7 +17,7 @@ if ( CGAL_FOUND )
 	create_single_source_cgal_lib( ${MAIN_FILE} )
 
 	#Matlab and mex configurations
-	set(MATLAB_ROOT "~/opt/MATLAB/R2016b")
+	set(MATLAB_ROOT "$ENV{HOME}/opt/MATLAB/R2017b")
 	set(CMAKE_CXX_STANDARD 11)
 	set(MEX_SAVE_PATH "${CMAKE_SOURCE_DIR}")
 	set(FLAGS "-fPIC -DMX_COMPAT_32 -DMATLAB_MEX_FILE")
@@ -34,7 +34,7 @@ if ( CGAL_FOUND )
 	add_library(${WRAP} OBJECT ${WRAP_FILE})
 	ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME}
 	    POST_BUILD
-	    COMMAND mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core
+	    COMMAND ${MATLAB_ROOT}/bin/mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core
 )
 
 	    # COMMAND mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} ${CGAL_LINK_FLAGS}
