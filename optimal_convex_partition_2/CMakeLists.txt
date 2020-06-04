@@ -17,7 +17,6 @@ if ( CGAL_FOUND )
 	create_single_source_cgal_lib( ${MAIN_FILE} )
 
 	#Matlab and mex configurations
-	set(MATLAB_ROOT "$ENV{HOME}/opt/MATLAB/R2017b")
 	set(CMAKE_CXX_STANDARD 11)
 	set(MEX_SAVE_PATH "${CMAKE_SOURCE_DIR}")
 	set(FLAGS "-fPIC -DMX_COMPAT_32 -DMATLAB_MEX_FILE")
@@ -28,13 +27,14 @@ if ( CGAL_FOUND )
 	set(CGAL_LINK_FLAGS "-lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core")
 
 	#include mex.h dir
+	set(MATLAB_ROOT "/usr/local/MATLAB/R2019b")
 	include_directories("${MATLAB_ROOT}/extern/include")
 	link_directories("/usr/lib/x86_64-linux-gnu")
 	# add_library(${PROJECT_NAME} ${MAIN_FILE})
 	add_library(${WRAP} OBJECT ${WRAP_FILE})
 	ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME}
 	    POST_BUILD
-	    COMMAND ${MATLAB_ROOT}/bin/mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core
+	    COMMAND ${MATLAB_ROOT}/bin/mex  -L./  -outdir .. -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core
 )
 
 	    # COMMAND mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} ${CGAL_LINK_FLAGS}

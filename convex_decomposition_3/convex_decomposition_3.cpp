@@ -120,7 +120,7 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 
 	/* Check for proper number of arguments. */
 	mwSize num_poly_in = nrhs/2; //number of input polygons
-	std::cout << "num poly in: " << num_poly_in << std::endl;
+	// std::cout << "num poly in: " << num_poly_in << std::endl;
 	if(nrhs<2) {
 		mexErrMsgIdAndTxt( "MATLAB:convex_decomposition_3:invalidNumInputs",
 	    				"At least two inputs required.");
@@ -148,7 +148,6 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 			Nf = Nf + N;
 		} else {
 			Nf = Nf - N;
-			std::cout << "sub\n";
 		}
 
 	}
@@ -161,16 +160,23 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 	plhs[0] = mxCreateCellArray(1, &num_polyhedrons);
 	/* y = mxGetPr(plhs[0]); */
 	int cell_index = 0;
+	int i = 0;
+	// for (auto poly = convex_parts.begin(); poly != convex_parts.end(); ++poly) {
+	// 	MeshPolyhedron MP;
+	// 	poly2mesh(*poly,MP);
+	// 	std::cout << "Size of polyhedron " << i << ": " << MP.vertices.size() << std::endl;	
+	// 	i++;
+	// }
 	for (auto poly : convex_parts) {
 		MeshPolyhedron MP;
 		poly2mesh(poly,MP);
-		int num_vertices = MP.vertices.size();
+		int num_vertices = poly.size_of_vertices();
 		mxArray *V = mxCreateDoubleMatrix( num_vertices, 3, mxREAL);
 		double *Vptr = mxGetPr(V);
-		std::cout << "size of vertices: " << num_vertices << std::endl;
+		/* std::cout << "size of vertices: " << num_vertices << std::endl; */
 		int k = 0;
 		for (auto v : MP.vertices) {
-			std::cout << v << " \n";
+			/* std::cout << v << " \n"; */
 			Vptr[k] = CGAL::to_double(v[0]);
 			Vptr[k + num_vertices] = CGAL::to_double(v[1]);
 			Vptr[k + num_vertices*2] = CGAL::to_double(v[2]);
@@ -178,6 +184,7 @@ void __mexFunction__( int nlhs, mxArray *plhs[],
 		}
 
 		mwSize num_facets = MP.facets.size();
+		/* std::cout << "size of vertices: " << num_vertices << std::endl; */
 		mxArray *facetsCell = mxCreateCellArray(1, &num_facets);
 		int facet_index = 0;
 		for (auto facet : MP.facets) {
@@ -223,8 +230,6 @@ void poly2mesh(Polyhedron P, MeshPolyhedron &MP)
 		} while(h!=hinit);
 		MP.facets.push_back(facet);
 	}
-
-	/* MeshPolyhedron Pout(vertices,facets); */
 }
 
 int find(VertexList vs, Point p) 
@@ -298,7 +303,7 @@ std::list<Polyhedron> decompose(Nef_polyhedron N)
 			convex_parts.push_back(P);
 		}
 	}
-	std::cout << "decomposition into " << convex_parts.size() << " convex parts " << std::endl;
+	// std::cout << "decomposition into " << convex_parts.size() << " convex parts " << std::endl;
 
 	return convex_parts;
 }

@@ -2,3 +2,5 @@
 *.old
 tags
 build/
+polyhedron_subtraction/
+:/

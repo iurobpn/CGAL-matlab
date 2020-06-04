@@ -17,7 +17,6 @@ if ( CGAL_FOUND )
 	create_single_source_cgal_lib( ${MAIN_FILE} )
 
 	#Matlab and mex configurations
-	set(MATLAB_ROOT "$ENV{HOME}/opt/MATLAB/R2017b")
 	set(LIB_INCLUDE "$ENV{HOME}/git/cgal/Convex_decomposition_3/include")
 	set(MEX_SAVE_PATH "${CMAKE_SOURCE_DIR}")
 	set(FLAGS "-fPIC -DMX_COMPAT_32 -DMATLAB_MEX_FILE")
@@ -28,6 +27,7 @@ if ( CGAL_FOUND )
 	set(CGAL_LINK_FLAGS "-lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core")
 	message("CGAL dir: ${CGAL_DIR}")
 
+	set(MATLAB_ROOT "/usr/local/MATLAB/R2019b")
 	include_directories("${MATLAB_ROOT}/extern/include")
 	include_directories (BEFORE ${LIB_INCLUDE})
 	link_directories("/usr/lib/x86_64-linux-gnu")
