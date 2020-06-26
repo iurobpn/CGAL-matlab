@@ -35,7 +35,7 @@ if ( CGAL_FOUND )
 
 	ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME}
 	    POST_BUILD
-	    COMMAND ${MATLAB_ROOT}/bin/mex  -L./  -outdir .. -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread -lmpfr -lgmp -lCGAL -lCGAL_Core
+	    COMMAND ${MATLAB_ROOT}/bin/mex  -L./  -outdir .. -output ${PROJECT_NAME} $<TARGET_OBJECTS:${WRAP}>  -l${PROJECT_NAME} -lboost_system -lpthread -lboost_thread -lmpfr -lgmp -lCGAL -lCGAL_Core
 )
 
 	    # COMMAND mex  -L./  -output ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/CMakeFiles/${WRAP}.dir/${WRAP_FILE}.o  -l${PROJECT_NAME} ${CGAL_LINK_FLAGS}
