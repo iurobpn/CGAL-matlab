@@ -9,6 +9,8 @@ cmake_minimum_required(VERSION 2.8.10)
 find_package(CGAL QUIET COMPONENTS Core )
 set(MAIN_FILE "greene_approx_convex_partition.cpp")
 set(CMAKE_BUILD_TYPE "Release")
+# change this variable to set matlab path
+# set(MATLAB_ROOT "/usr/local/MATLAB/R2019b")
 
 if ( CGAL_FOUND )
 # CGAL static library creation
@@ -28,7 +30,6 @@ if ( CGAL_FOUND )
 	set(CGAL_LINK_FLAGS "-lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core")
 
 	#include mex.h dir
-	set(MATLAB_ROOT "/usr/local/MATLAB/R2019b")
 	include_directories("${MATLAB_ROOT}/extern/include")
 	link_directories("/usr/lib/x86_64-linux-gnu")
 	# add_library(${PROJECT_NAME} ${MAIN_FILE})

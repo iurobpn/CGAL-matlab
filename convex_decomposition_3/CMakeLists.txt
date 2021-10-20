@@ -7,6 +7,8 @@ cmake_minimum_required(VERSION 2.8.10)
 
 find_package(CGAL QUIET )
 set(MAIN_FILE "convex_decomposition_3.cpp")
+# change this variable to set matlab path
+# set(MATLAB_ROOT "/usr/local/MATLAB/R2019b")
 
 if ( CGAL_FOUND )
 # CGAL static library creation
@@ -27,7 +29,6 @@ if ( CGAL_FOUND )
 	set(CGAL_LINK_FLAGS "-lboost_system -lpthread -lboost_thread  -lgmp -lCGAL -lCGAL_Core")
 	message("CGAL dir: ${CGAL_DIR}")
 
-	set(MATLAB_ROOT "/usr/local/MATLAB/R2019b")
 	include_directories("${MATLAB_ROOT}/extern/include")
 	include_directories (BEFORE ${LIB_INCLUDE})
 	link_directories("/usr/lib/x86_64-linux-gnu")
