@@ -1,4 +1,7 @@
 # CGAL matlab
+## Warning
+I have updated the CMakeLists.txt file to use the cmake FindMatlab module in the optimal_convex_partition_2 function. I will be updating the other function soon. This will make it compatible with CGAL 5.x and above.
+
 ## Descripion
 CGAL functions in matlab using mex tool and cmake for compilation. 
 

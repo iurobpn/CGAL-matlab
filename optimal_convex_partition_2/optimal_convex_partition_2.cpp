@@ -1,144 +1,153 @@
+/** MyMEXFunction
+ * c = MyMEXFunction(a,b);
+ * Adds offset argument a to each element of double array b and
+ * returns the modified array c.
+ */
+
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Partition_is_valid_traits_2.h>
-#include <CGAL/polygon_function_objects.h>
 #include <CGAL/partition_2.h>
-#include <CGAL/point_generators_2.h>
-#include <CGAL/random_polygon_2.h>
 #include <cassert>
-#include <list>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <chrono>
 #include <thread>
-#include "mex.h"
-#include "mex_main.h"
-#include "matrix.h"
-  // mxArray *mxCreateCellArray(mwSize ndim, const mwSize *dims);
+
+#include "mex.hpp"
+#include "mexAdapter.hpp"
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Partition_traits_2<K>                         Traits;
-typedef CGAL::Is_convex_2<Traits>                           Is_convex_2;
 typedef Traits::Polygon_2                                   Polygon_2;
 typedef Traits::Point_2                                     Point_2;
-// typedef Polygon_2::Vertex_const_iterator                    Vertex_iterator;
-typedef Polygon_2::Vertex_iterator 			    VertexIterator;
-typedef std::list<Polygon_2>                                Polygon_list;
+typedef CGAL::Is_convex_2<Traits>                           Is_convex_2;
+typedef std::vector<Polygon_2>                                Polygon_List;
 typedef CGAL::Partition_is_valid_traits_2<Traits, Is_convex_2>
                                                             Validity_traits;
-typedef CGAL::Creator_uniform_2<int, Point_2>               Creator;
-typedef CGAL::Random_points_in_square_2<Point_2, Creator>   Point_generator;
+typedef Polygon_2::Vertex_iterator 			    VertexIterator;
 
-void print_polygon(const Polygon_2& p);
-Polygon_list optimal_convex_partition_2(const size_t &M, double *x);
+using namespace matlab::data;
+using matlab::mex::ArgumentList;
 
-Polygon_2 make_polygon(double *x,const int &M);
+class MexFunction : public matlab::mex::Function {
+public:
+    void operator()(ArgumentList outputs, ArgumentList inputs) {
+		checkArguments(outputs, inputs);
+        TypedArray<double> inx = std::move(inputs[0]);
+		const size_t numRows = inx.getDimensions()[0];
+		double* x = new double[inx.getNumberOfElements()];
+		memcpy(x,&*inx.begin(),sizeof(float)*inx.getNumberOfElements());
 
-void __mexFunction__( int nlhs, mxArray *plhs[],
-                  int nrhs, const mxArray *prhs[] )
-{
-	double *x,*y;
-	size_t mrows,ncols;
+		Polygon_List partition_polys = 	optimal_convex_partition_2(numRows,x);
+		int N = partition_polys.size();
+		ArrayFactory f;
+		CellArray out = f.createCellArray({1,N});
+			
 
-	/* Check for proper number of arguments. */
-	if(nrhs!=1) {
-		mexErrMsgIdAndTxt( "MATLAB:timesfour:invalidNumInputs",
-	    				"One input required.");
-	} else if(nlhs>1) {
-		mexErrMsgIdAndTxt( "MATLAB:timesfour:maxlhs",
-	    				"Too many output arguments.");
-	}
+		for (int i = 0; i < N; ++i) {
+			Polygon_2 polyi = partition_polys[i];
+			int M = polyi.size();
+			TypedArray<double> outi =  f.createArray<double>({ M, 2});
 
-	/* The input must be a noncomplex 3x2 double matrix.*/
-	mrows = mxGetM(prhs[0]);
-	ncols = mxGetN(prhs[0]);
-	// mexPrintf("rows:%d, cols:%d\n",mrows,ncols);
-	if( !mxIsDouble(prhs[0]) || mxIsComplex(prhs[0]) || !(mrows>2 && ncols==2) ) {
-		mexErrMsgIdAndTxt( "MATLAB:optimal_convex_partition_2:inputNotBigEnough",
-				    "Input must be at least 3x2 double matrix.");
-	}
-
-
-	// Assign pointers to each input and output.
-	x = mxGetPr(prhs[0]);
-
-	/* Call the timesfour subroutine. */
-	Polygon_list pl = optimal_convex_partition_2(mrows,x);
-	// mxArray *mxCreateCellArray(mwSize ndim, const mwSize *dims);
-	/* Create matrix for the return argument. */
-	mwSize numpoly[1];
-	numpoly[0] = pl.size();
-	// mexPrintf("numpoly: %d\n",numpoly[0]);
-
-	plhs[0] = mxCreateCellArray(1, numpoly);
-	y = mxGetPr(plhs[0]);
-
-	Polygon_list::iterator it;
-	int index = 0;
-	for(it = pl.begin(); it != pl.end(); it++) {
-		Polygon_2 p = *it;
-		/*  set the output pointer to the output matrix */
-		int n = p.size();
-		// mexPrintf("polygon size: %d\n",n);
-		mxArray *c = mxCreateDoubleMatrix( n, 2, mxREAL);
-		double *cptr = mxGetPr(c);
-
-		int i = 0;
-		for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
-			++vi) { 
-			cptr[i] = vi->x();
-			cptr[i+n] = vi->y();
-			i++;
+			int j = 0;
+			for (auto &elem : outi) {
+				int k = j%M;
+				Point_2 p = polyi.vertex(k);
+				if (j < M)
+					elem = (double) p.x();
+				else
+					elem = (double) p.y();
+				j++;
+			}
+			out[i] = outi;
 		}
-		mxSetCell(plhs[0],index,c);
-		index++;
+		outputs[0] = out;
+    }
+
+    void checkArguments(ArgumentList outputs, ArgumentList inputs) {
+        // Get pointer to engine
+        std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
+
+        // Get array factory
+        ArrayFactory factory;
+
+        // Check offset argument: First input must be scalar double
+        if (inputs.size() != 1)
+        {
+            matlabPtr->feval(u"error",
+                0,
+                std::vector<Array>({ factory.createScalar("Error: it must have 1 one input") }));
+        }
+
+        // Check number of outputs
+        if (outputs.size() > 1) 
+        {
+            matlabPtr->feval(u"error",
+                0,
+                std::vector<Array>({ factory.createScalar("Too many output arguments") }));
+        }
+		// Check offset argument: First input must be scalar double
+        if (inputs[0].getType() != ArrayType::DOUBLE ||
+            inputs[0].getType() == ArrayType::COMPLEX_DOUBLE)
+        {
+            matlabPtr->feval(u"error",
+                0,
+                std::vector<Array>({ factory.createScalar("Input must be double") }));
+        }
+		const size_t numRows = inputs[0].getDimensions()[0];
+        const size_t numColumns = inputs[0].getDimensions()[1];
+        if (numRows > 2 && numColumns == 2)
+        {
+            matlabPtr->feval(u"error",
+                0,
+                std::vector<Array>({ factory.createScalar("Input must be at lesat 3x2 double matrix") }));
+        }
+
+    }
+
+	Polygon_List optimal_convex_partition_2(const size_t &rows, double *x)
+	{
+		Polygon_2             polygon;
+		Polygon_List          partition_polys;
+		Traits                partition_traits;
+		Validity_traits       validity_traits;
+
+		polygon = make_polygon(x,rows);
+		// print_polygon(polygon);
+		CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
+						polygon.vertices_end(),
+						std::back_inserter(partition_polys),
+						partition_traits);
+		assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
+					 polygon.vertices_end(),
+					 partition_polys.begin(),
+					 partition_polys.end(),
+					 validity_traits));
+
+
+		return partition_polys;
 	}
-	
-	return;
-}
 
-Polygon_list optimal_convex_partition_2(const size_t &rows, double *x)
-{
-	Polygon_2             polygon;
-	Polygon_list          partition_polys;
-	Traits                partition_traits;
-	Validity_traits       validity_traits;
+	Polygon_2 make_polygon(double *x, const int &M)
+	{
+		Polygon_2 polygon;
 
-	polygon = make_polygon(x,rows);
-	// print_polygon(polygon);
-	CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
-				    polygon.vertices_end(),
-				    std::back_inserter(partition_polys),
-				    partition_traits);
-	assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
-			     polygon.vertices_end(),
-			     partition_polys.begin(),
-			     partition_polys.end(),
-			     validity_traits));
-   	
+		for(int i=0; i<M; i++)
+			polygon.push_back(Point_2(x[i],x[i+M]));
 
-	return partition_polys;
-}
-
-Polygon_2 make_polygon(double *x, const int &M)
-{
-	Polygon_2 polygon;
-
-	for(int i=0; i<M; i++)
-		polygon.push_back(Point_2(x[i],x[i+M]));
-
-	return polygon;
-}
-
-
-
-void print_polygon(const Polygon_2& p)
-{
-	std::cout << "P: ";
-	for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
-			++vi) { 
-		mexPrintf("(%f,%f)\n", vi->x(), vi->y());
+		return polygon;
 	}
-	std::cout << "\n";
-}
+
+	// void print_polygon(const Polygon_2& p)
+	// {
+	// 	std::cout << "P: ";
+	// 	for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
+	// 			++vi) { 
+	// 		printf("(%f,%f)\n", vi->x(), vi->y());
+	// 	}
+	// 	std::cout << "\n";
+	// }
+};
 
