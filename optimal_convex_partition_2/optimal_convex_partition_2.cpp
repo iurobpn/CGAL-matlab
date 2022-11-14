@@ -43,13 +43,13 @@ public:
 		Polygon_List partition_polys = 	optimal_convex_partition_2(numRows,x);
 		int N = partition_polys.size();
 		ArrayFactory f;
-		CellArray out = f.createCellArray({1,N});
+		CellArray out = f.createCellArray({1,(long unsigned int)N});
 			
 
 		for (int i = 0; i < N; ++i) {
 			Polygon_2 polyi = partition_polys[i];
 			int M = polyi.size();
-			TypedArray<double> outi =  f.createArray<double>({ M, 2});
+			TypedArray<double> outi =  f.createArray<double>({ (long unsigned int)M, 2});
 
 			int j = 0;
 			for (auto &elem : outi) {
@@ -96,15 +96,15 @@ public:
                 0,
                 std::vector<Array>({ factory.createScalar("Input must be double") }));
         }
+
 		const size_t numRows = inputs[0].getDimensions()[0];
         const size_t numColumns = inputs[0].getDimensions()[1];
-        if (numRows > 2 && numColumns == 2)
+        if (numRows < 3 || numColumns != 2)
         {
             matlabPtr->feval(u"error",
                 0,
-                std::vector<Array>({ factory.createScalar("Input must be at lesat 3x2 double matrix") }));
+                std::vector<Array>({ factory.createScalar("Input must be at least 3x2 double matrix") }));
         }
-
     }
 
 	Polygon_List optimal_convex_partition_2(const size_t &rows, double *x)
@@ -139,15 +139,5 @@ public:
 
 		return polygon;
 	}
-
-	// void print_polygon(const Polygon_2& p)
-	// {
-	// 	std::cout << "P: ";
-	// 	for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
-	// 			++vi) { 
-	// 		printf("(%f,%f)\n", vi->x(), vi->y());
-	// 	}
-	// 	std::cout << "\n";
-	// }
 };
 
