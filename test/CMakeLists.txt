@@ -2,7 +2,7 @@
 # This is the CMake script for compiling a CGAL application.
 
 cmake_minimum_required(VERSION 3.24)
-project( optimal_convex_partition )
+project( mexFun )
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,7 @@ find_package(CGAL REQUIRED COMPONENTS Core)
 #FindMatlab()
 include_directories(/usr/local/include .)
 matlab_add_mex(
-	NAME optimal_convex_partition
+	NAME mexFun
 	SRC optimal_convex_partition_2.cpp
 	LINK_TO CGAL::CGAL CGAL::CGAL_Core)
 
