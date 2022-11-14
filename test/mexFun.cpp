@@ -62,60 +62,27 @@ public:
         }
 		const size_t numRows = inputs[0].getDimensions()[0];
         const size_t numColumns = inputs[0].getDimensions()[1];
-        if (numRows > 2 && numColumns == 2)
+		std::ostringstream stream;
+		stream << "dims: " << numRows << "," << numColumns << "\n";
+		matlabPtr->feval(u"fprintf", 0,
+				std::vector<Array>({ factory.createScalar(stream.str()) }));
+        if (numRows < 3 || numColumns != 2)
         {
             matlabPtr->feval(u"error",
                 0,
-                std::vector<Array>({ factory.createScalar("Input must be at lesat 3x2 double matrix") }));
+                std::vector<Array>({ factory.createScalar("Input must be at least 3x2 double matrix") }));
         }
 
     }
 
-	// Polygon_list optimal_convex_partition_2(const size_t &rows, double *x)
-	// {
-	// 	Polygon_2             polygon;
-	// 	Polygon_list          partition_polys;
-	// 	Traits                partition_traits;
-	// 	Validity_traits       validity_traits;
-    //
-	// 	polygon = make_polygon(x,rows);
-	// 	// print_polygon(polygon);
-	// 	CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
-	// 					polygon.vertices_end(),
-	// 					std::back_inserter(partition_polys),
-	// 					partition_traits);
-	// 	assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
-	// 				 polygon.vertices_end(),
-	// 				 partition_polys.begin(),
-	// 				 partition_polys.end(),
-	// 				 validity_traits));
-	// 	
-    //
-	// 	return partition_polys;
-	// }
+	void display(std::shared_ptr<matlab::engine::MATLABEngine> &matlabPtr, std::ostringstream& stream) {
 
-	// Polygon_2 make_polygon(double *x, const int &M)
-	// {
-	// 	Polygon_2 polygon;
-    //
-	// 	for(int i=0; i<M; i++)
-	// 		polygon.push_back(Point_2(x[i],x[i+M]));
-    //
-	// 	return polygon;
-	// }
-
-
-
-	// void print_polygon(const Polygon_2& p)
-	// {
-	// 	std::cout << "P: ";
-	// 	for(VertexIterator vi = p.vertices_begin(); vi != p.vertices_end();
-	// 			++vi) { 
-	// 		printf("(%f,%f)\n", vi->x(), vi->y());
-	// 	}
-	// 	std::cout << "\n";
-	// }
-
-
+        ArrayFactory factory;
+		// Pass stream content to MATLAB fprintf function
+		matlabPtr->feval(u"fprintf", 0,
+				std::vector<Array>({ factory.createScalar(stream.str()) }));
+		// Clear stream buffer
+		stream.str("");
+	}
 };
 
