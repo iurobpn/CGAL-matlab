@@ -98,13 +98,6 @@ class MexFunction : public matlab::mex::Function {
 public:
 	void operator()(ArgumentList outputs, ArgumentList inputs) {
 		checkArguments(outputs, inputs);
-		// TypedArray<double> inx = std::move(inputs[0]);
-		// const size_t numRows = inx.getDimensions()[0];
-		// double* x = new double[inx.getNumberOfElements()];
-		// memcpy(x,&*inx.begin(),sizeof(float)*inx.getNumberOfElements());
-
-		// Polygon_List partition_polys = 	optimal_convex_partition_2(numRows,x);
-		// int N = 2;partition_polys.size();
 
 		double *verticesRaw;
 		int Nin = inputs.size();
@@ -114,10 +107,20 @@ public:
 		/* Check for proper number of arguments. */
 		size_t num_poly_in = Nin/2.0; //number of input polygons
 
+		// {
+		// 	//frpintf
+		// 	std::ostringstream stream;
+		// 	stream << "Number of inputs: " << Nin << "\n";
+		// 	matlabPtr->feval(u"fprintf", 0,
+		// 			std::vector<Array>({ f.createScalar(stream.str()) }));
+		// }
+
 		Nef_polyhedron Nf(Nef_polyhedron::EMPTY); 
 		for (int i = 0; i < Nin; i = i + 2) {
 			size_t numRows = inputs[i].getDimensions()[0];
 			size_t numCols = inputs[i].getDimensions()[1];
+
+
 			if (inputs[i].getType() != ArrayType::DOUBLE ||
 					inputs[i].getType() == ArrayType::COMPLEX_DOUBLE ||
 					!(numRows > 4 && numCols == 3)) {
@@ -126,12 +129,12 @@ public:
 						std::vector<Array>({ f.createScalar("It must be at least a 4x3 double matrix") }));
 			}
 			TypedArray<double> Vi = std::move(inputs[i]);
-			verticesRaw = new double[Vi.getNumberOfElements()];
-			memcpy(verticesRaw,&*Vi.begin(),sizeof(float)*Vi.getNumberOfElements());
+			// verticesRaw = new double[Vi.getNumberOfElements()];
+			// memcpy(verticesRaw,&*Vi.begin(),sizeof(float)*Vi.getNumberOfElements());
 
 			CellArray facets = inputs[i+1];
 
-			Polyhedron P = createPolyhedron(verticesRaw,numRows,facets);
+			Polyhedron P = createPolyhedron(Vi,numRows,facets);
 			Nef_polyhedron N(P);
 			if (i==0) {
 				Nf = Nf + N;
@@ -140,6 +143,8 @@ public:
 			}
 		}
 
+		// std::vector<int> V;
+		// V[0] = 1;
 		// for (int i = 0; i < N; ++i) {
 		// 	Polygon_2 polyi = partition_polys[i];
 		// 	int M = polyi.size();
@@ -158,9 +163,8 @@ public:
 		// 	out[i] = outi;
 		// }
 
-		// std::cout << "num poly in: " << num_poly_in << std::endl;
-
 		std::list<Polyhedron> convex_parts = decompose(Nf);
+
 		size_t num_out = convex_parts.size();
 		CellArray out = f.createCellArray({1,num_out});
 
@@ -173,9 +177,9 @@ public:
 			int k = 0;
 			TypedArray<double> Vi = f.createArray<double>({num_vertices,3});
 			for (auto v : MP.vertices) {
-				Vi[k] = CGAL::to_double(v[0]);
-				Vi[k + num_vertices] = CGAL::to_double(v[1]);
-				Vi[k + num_vertices*2] = CGAL::to_double(v[2]);
+				Vi[k][0] = CGAL::to_double(v[0]);
+				Vi[k][1] = CGAL::to_double(v[1]);
+				Vi[k][2] = CGAL::to_double(v[2]);
 				k++;
 			}
 
@@ -259,6 +263,34 @@ public:
 		return -1;
 	}
 
+	Polyhedron createPolyhedron(TypedArray<double> &verticesRaw, int num_vertices, const CellArray facets)
+	{
+		size_t num_facets = facets.getNumberOfElements();
+		// Assign pointers to each input and output.
+		double *facetRaw;
+
+		// ArrayFactory f;
+		// std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
+
+		FacetList facets_lst;
+		for (int i = 0; i < num_facets; ++i) {
+			std::vector<int> facet;
+			TypedArray<double> Fi = facets[i];
+
+			for (auto elem : Fi)
+				facet.push_back(elem-1); //compensate for matlab stating with 1 on its indexes
+			facets_lst.push_back(facet);
+		}
+
+		VertexList vertices;
+		for (int i = 0; i < num_vertices; ++i)
+			vertices.push_back(Point((double)verticesRaw[i][0], (double)verticesRaw[i][1], (double)verticesRaw[i][2]));
+
+		Polyhedron P;
+		BuildPolyhedron<HalfedgeDS> poly(vertices,facets_lst);
+		P.delegate(poly);
+		return P;
+	}
 	/**
 	 * verticesRaw:  
 	 *
