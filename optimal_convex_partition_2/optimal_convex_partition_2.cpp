@@ -35,12 +35,12 @@ class MexFunction : public matlab::mex::Function {
 public:
     void operator()(ArgumentList outputs, ArgumentList inputs) {
 		checkArguments(outputs, inputs);
-        TypedArray<double> inx = std::move(inputs[0]);
-		const size_t numRows = inx.getDimensions()[0];
-		double* x = new double[inx.getNumberOfElements()];
-		memcpy(x,&*inx.begin(),sizeof(float)*inx.getNumberOfElements());
+        TypedArray<double> vertex = std::move(inputs[0]);
+		const size_t numRows = vertex.getDimensions()[0];
+		// double* x = new double[vertex.getNumberOfElements()];
+		// memcpy(x,&*vertex.begin(),sizeof(float)*vertex.getNumberOfElements());
 
-		Polygon_List partition_polys = 	optimal_convex_partition_2(numRows,x);
+		Polygon_List partition_polys = 	optimal_convex_partition_2(numRows,vertex);
 		int N = partition_polys.size();
 		ArrayFactory f;
 		CellArray out = f.createCellArray({1,(long unsigned int)N});
@@ -107,14 +107,14 @@ public:
         }
     }
 
-	Polygon_List optimal_convex_partition_2(const size_t &rows, double *x)
+	Polygon_List optimal_convex_partition_2(const size_t &rows, const TypedArray<double> &vertex)
 	{
 		Polygon_2             polygon;
 		Polygon_List          partition_polys;
 		Traits                partition_traits;
 		Validity_traits       validity_traits;
 
-		polygon = make_polygon(x,rows);
+		polygon = make_polygon(vertex,rows);
 		// print_polygon(polygon);
 		CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
 						polygon.vertices_end(),
@@ -130,12 +130,12 @@ public:
 		return partition_polys;
 	}
 
-	Polygon_2 make_polygon(double *x, const int &M)
+	Polygon_2 make_polygon(const TypedArray<double> &vertex, const int &M)
 	{
 		Polygon_2 polygon;
 
 		for(int i=0; i<M; i++)
-			polygon.push_back(Point_2(x[i],x[i+M]));
+			polygon.push_back(Point_2(vertex[i][0], vertex[i][1]));
 
 		return polygon;
 	}
