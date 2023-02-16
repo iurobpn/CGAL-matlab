@@ -7,7 +7,7 @@ project( optimal_convex_partition )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(Matlab_ROOT_DIR /root/opt/MATLAB/R2022b)
+set(Matlab_ROOT_DIR /usr/local/MATLAB/R2022b)
 
 find_package(Matlab REQUIRED)
 # find_package(Armadillo REQUIRED)
